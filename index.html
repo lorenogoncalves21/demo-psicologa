@@ -298,7 +298,12 @@ textarea{min-height:72px;resize:none;margin-top:10px}
       <label class="chip"><input type="checkbox" name="per" value="manhã"><span>Manhã</span></label>
       <label class="chip"><input type="checkbox" name="per" value="tarde"><span>Tarde</span></label>
       <label class="chip"><input type="checkbox" name="per" value="noite"><span>Noite</span></label>
-      <label class="chip"><input type="checkbox" id="fPrimeira"><span>É minha 1ª vez</span></label>
+    </div></div>
+  <div><h4>Já fez terapia antes?</h4>
+    <div class="chips">
+      <label class="chip"><input type="radio" name="exp" value="primeira"><span>É minha 1ª vez</span></label>
+      <label class="chip"><input type="radio" name="exp" value="ja-fiz"><span>Já fiz antes</span></label>
+      <label class="chip"><input type="radio" name="exp" value="" checked><span>Prefiro não dizer</span></label>
     </div></div>
   <div>
     <textarea id="fMsg" maxlength="300" placeholder="Quer contar algo? (opcional, sem precisar de detalhes)"></textarea>
@@ -448,9 +453,11 @@ function montar() {
   const mod = document.querySelector("input[name=mod]:checked").value;
   const per = [...document.querySelectorAll("input[name=per]:checked")].map(i => i.value);
   const msg = $("#fMsg").value.trim();
-  let t = `Olá, ${pn}! ${nome ? `Sou ${nome}. ` : ""}Vi sua página e gostaria de agendar uma consulta.\n\n• Atendimento: ${mod}`;
+  const exp = document.querySelector("input[name=exp]:checked").value;
+  let t = `Olá, ${pn}! ${nome ? `Meu nome é ${nome}. ` : ""}Vi sua página e gostaria de agendar uma consulta.\n\n• Atendimento: ${mod}`;
   if (per.length) t += `\n• Melhor período: ${per.join(", ")}`;
-  if ($("#fPrimeira").checked) t += `\n• É minha primeira vez em terapia`;
+  if (exp === "primeira") t += `\n• É minha primeira vez em terapia`;
+  if (exp === "ja-fiz") t += `\n• Já fiz terapia antes`;
   if (msg) t += `\n\n${msg}`;
   return t;
 }
