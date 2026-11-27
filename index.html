@@ -590,6 +590,96 @@ function ligarFormulario() {
   })).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
 })();
 
+/* MODO DEMONSTRAÇÃO · abra o site com ?tour=1 no final do link
+   e a página faz sozinha um passeio lento por todas as funções (para gravar vídeo) */
+(function(){
+  if (!new URLSearchParams(location.search).has('tour')) return;
+  const $ = s => document.querySelector(s);
+  const espera = ms => new Promise(r => setTimeout(r, ms));
+  const suave = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  /* rolagem lenta e suave até um ponto (da página ou de dentro do painel) */
+  function rolar(alvoY, dur = 1600, caixa = null) {
+    const ini = caixa ? caixa.scrollTop : scrollY, dist = alvoY - ini, t0 = performance.now();
+    return new Promise(res => {
+      (function passo(t){
+        const p = Math.min(1, (t - t0) / dur), y = ini + dist * suave(p);
+        caixa ? (caixa.scrollTop = y) : scrollTo(0, y);
+        p < 1 ? requestAnimationFrame(passo) : res();
+      })(t0);
+    });
+  }
+  const centro = (el, caixa) => {
+    const r = el.getBoundingClientRect();
+    if (caixa) return caixa.scrollTop + r.top - caixa.getBoundingClientRect().top - caixa.clientHeight / 2 + r.height / 2;
+    return scrollY + r.top - innerHeight / 2 + r.height / 2;
+  };
+  /* "dedo": um círculo que aparece onde a pessoa toca */
+  const dedo = document.createElement('div');
+  dedo.style.cssText = 'position:fixed;z-index:99;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 6px rgba(255,255,255,.18);pointer-events:none;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s';
+  document.body.append(dedo);
+  async function tocar(el, fx = .5, fy = .5) {
+    const r = el.getBoundingClientRect(), x = r.left + r.width * fx, y = r.top + r.height * fy;
+    dedo.style.left = x + 'px'; dedo.style.top = y + 'px';
+    dedo.style.opacity = '1'; dedo.style.transform = 'scale(1)';
+    await espera(380);
+    el.dispatchEvent(new PointerEvent('pointerdown', { clientX: x, clientY: y, bubbles: true }));
+    dedo.style.transform = 'scale(.8)';
+    await espera(220);
+    el.click();
+    dedo.style.opacity = '0'; dedo.style.transform = 'scale(.6)';
+    await espera(300);
+  }
+  async function digitar(el, txt) {
+    el.focus();
+    for (const c of txt) { el.value += c; el.dispatchEvent(new Event('input', { bubbles: true })); await espera(110); }
+    el.blur();
+  }
+  const painel = () => $('#folhaPainel');
+
+  addEventListener('load', async () => {
+    await espera(4200);                                         /* topo: nome, linha dourada, botão */
+    await rolar(innerHeight * .55, 2200); await espera(1400);   /* cartões aparecendo */
+    const cs = document.querySelectorAll('.cartao');
+
+    /* 1 · Agendar */
+    await rolar(centro(cs[0]), 1500); await espera(1200);
+    await tocar(cs[0], .3, .55); await espera(1300);
+    await tocar($('#fNome')); await digitar($('#fNome'), 'Ana'); await espera(700);
+    await tocar($('input[name=mod][value=presencial]').nextElementSibling); await espera(900);
+    await tocar(document.querySelectorAll('input[name=per]')[1].nextElementSibling); await espera(900);
+    await tocar($('input[name=exp][value=primeira]').nextElementSibling); await espera(900);
+    await rolar(centro($('#fMsg'), painel()), 1300, painel()); await espera(500);
+    await tocar($('#fMsg')); await digitar($('#fMsg'), 'Tenho sentido muita ansiedade no trabalho.'); await espera(600);
+    await rolar(centro($('#balao'), painel()), 1300, painel()); await espera(3200);   /* mensagem montada */
+    await tocar($('#fechar')); await espera(1000);
+
+    /* 2 · Como funciona + dúvidas */
+    await rolar(centro(cs[1]), 1600); await espera(1100);
+    await tocar(cs[1], .7, .55); await espera(1700);
+    const ds = document.querySelectorAll('#conteudo details');
+    await rolar(centro(ds[0], painel()), 1300, painel()); await espera(500);
+    await tocar(ds[0].querySelector('summary')); await espera(2200);
+    await tocar(ds[2].querySelector('summary')); await espera(2200);
+    await tocar($('#fechar')); await espera(1000);
+
+    /* 3 · Consultório */
+    await rolar(centro(cs[2]), 1600); await espera(1100);
+    await tocar(cs[2], .3, .55); await espera(2600);
+    await tocar($('#fechar')); await espera(1000);
+
+    /* 4 · Sobre mim e rodapé */
+    await rolar(centro($('.sobre')), 2000); await espera(2600);
+    await rolar(document.documentElement.scrollHeight, 1800); await espera(2400);
+
+    /* 5 · volta ao topo e mostra o botão do WhatsApp */
+    await rolar(0, 2600); await espera(1200);
+    const wa = $('#flutuante'), r = wa.getBoundingClientRect();
+    dedo.style.left = (r.left + r.width / 2) + 'px'; dedo.style.top = (r.top + r.height / 2) + 'px';
+    dedo.style.opacity = '1'; dedo.style.transform = 'scale(1)';
+    await espera(1800); dedo.style.opacity = '0';
+  });
+})();
+
 </script>
 </body>
 </html>
